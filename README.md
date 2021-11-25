@@ -1,37 +1,45 @@
 #  SEL et Monnaie Locale : PLSQL
 
+
+## Introduction
+
 Ce document sert de compte rendu au TP n°2 de Base de Données réaliser lors de l'année 2021-2022.  
 Ce document permet de répondre aux questions et d'exposer nos choix et nos réalisation.
 
 Les membre du groupe ayant réalisé ce TP se trouvent dans la partie "Contributeurs", la dernière partie de ce document.
 
-# Documentation supplémentatire
+Le script de création de la base de données initialement réalisée lors du TP1, sans les vues, procédures et fonctions réalisées lors du TP2, se trouve dans le fichier **SEL_LA2_Model.sql**.
+
+Le schéma se trouve ici :
+![initial_db_schema](./ressources/bdd_sel_la2_schema.png)
+
+## Documentation supplémentatire
 
 Le projet possède également un ensemble de documentation qui se trouve [ici](https://drive.google.com/drive/folders/1HUtnfMiaElMgTJvxY6ZfwDOUtS7gWKOl?usp=sharing).
 
-# Questions
+## Questions
 
-## Question 1
+### Question 1
 
-### 1.1, 1.2 et 1.3
+#### 1.1, 1.2 et 1.3
 
-Nous avons fait le choix de créer une vue **ACIVE_MEMBER**, elle gérera donc la mise à jour de l'état des membres en fonction de la date de leur dernière cotisation autant dans le cas d'un nouveau payement que d'une vérification quotidienne.
+Nous avons fait le choix de créer une vue **ACTIVE_MEMBER**, elle gérera donc la mise à jour de l'état des membres en fonction de la date de leur dernière cotisation autant dans le cas d'un nouveau payement que d'une vérification quotidienne.
 
 Voici le script de création de la vue **ACTIVE_MEMBER**:
 ```sql
 CREATE VIEW ACTIVE_MEMBER AS
-SELECT CodeMembre FROM membre_has_cotisation
+SELECT Membre_CodeMembre FROM membre_has_cotisation
 WHERE DATE_ADD(DatePaiement,INTERVAL 1 YEAR) > CURRENT_DATE();
 ```
 
-### 1.4
+#### 1.4
 
 Voici le trigger réalisé :
 ```sql
  CREATE TRIGGER init_time_counter BEFORE INSERT ON membre FOR EACH ROW SET NEW.CompteTemps = 10;
 ```
 
-### 1.5
+#### 1.5
 
 Voici le script de création de la procédure :
 
@@ -67,9 +75,9 @@ END;
 $$
 ```
 
-# Question 2
+### Question 2
 
-### 2.1
+#### 2.1
 
 Voici la fonction réalisée :
 
@@ -89,7 +97,7 @@ END;
 $$
 ```
 
-### 2.2
+#### 2.2
 
 Voici la procedure réalisée :
 
@@ -109,7 +117,145 @@ CALL searchPropositions(DATE("2021-11-11 01:02:03"), DATE("2021-11-25"), "piano"
 SELECT * FROM temp_proposition_filtered;
 ```
 
-# Contributeurs
+### Question 3
+
+### Question 4
+
+#### 4.1
+
+![updated_db_schema](./ressources/bdd_sel_la2_monnaie_schema.png)
+
+#### 4.2
+
+Le script de création de la base de données (sans vue/fonction/procedure) modifiée se trouve dans le fichier **SEL_LA2_MONNAIE_Model.sql**.
+
+#### 4.3
+
+Fonctions :
+
+
+1. Procedures :
+  - Mise à jour du solde d'écus des membres :
+```sql
+DELIMITER $$
+CREATE PROCEDURE updateMemberBalance(IN amount FLOAT, IN memberCode INT)
+BEGIN
+	UPDATE membre SET solde_ecu = (solde_ecu + amount) WHERE CodeMembre = memberCode;
+END
+$$
+```
+
+2. Triggers :
+  - Mise à jour du solde de la banque lors d'un update **operationchange** :
+    ```sql
+    DELIMITER $$
+    CREATE TRIGGER UPDATE_BANK_BALANCE_ON_UPDATE
+    BEFORE  UPDATE ON operationchange
+    FOR EACH ROW
+    BEGIN
+    	DECLARE lastBalance FLOAT;
+        SET lastBalance = (SELECT soldeCompte FROM operationchange GROUP BY dateHeureChange HAVING MAX(dateHeureChange));
+    	SET new.soldeCompte = ((new.montant - old.montant) + lastBalance);
+    END
+    $$
+    ```
+  - Mise à jour du solde de la banque lors d'un insert **operationchange** :
+    ```sql
+    DELIMITER $$
+    CREATE TRIGGER UPDATE_BANK_BALANCE_ON_INSERT
+    BEFORE  INSERT ON operationchange
+    FOR EACH ROW
+    BEGIN
+    	DECLARE lastBalance FLOAT;
+      SET lastBalance = (SELECT soldeCompte FROM operationchange GROUP BY dateHeureChange HAVING MAX(dateHeureChange));
+      IF lastBalance IS NULL THEN
+        SET new.soldeCompte = new.montant;
+      ELSE
+    	 SET new.soldeCompte = (new.montant + lastBalance);
+      END IF;
+    END
+    $$
+    ```
+  - Mise à jour du solde de l'utilisateur lors d'un udpdate dans **operationchange** :
+    ```sql
+    DELIMITER $$
+    CREATE TRIGGER UPDATE_MEMBER_BALANCE_ON_UPDATE_IN_CHANGE
+    BEFORE  UPDATE ON operationchange
+    FOR EACH ROW
+    BEGIN
+      	CALL updateMemberBalance(NEW.montant - OLD.montant, NEW.Membre_CodeMembre);
+    END
+    $$
+    ```
+  - Mise à jour du solde de l'utilisateur lors d'un insert dans **operationchange** :
+    ```sql
+    DELIMITER $$
+    CREATE TRIGGER UPDATE_MEMBER_BALANCE_ON_INSERT_IN_CHANGE
+    BEFORE  INSERT ON operationchange
+    FOR EACH ROW
+    BEGIN
+      	CALL updateMemberBalance(NEW.montant, NEW.Membre_CodeMembre);
+    END
+    $$
+    ```
+
+  - Mise à jour du solde des utilisateurs lors d'un INSERT dans **operation**
+    ```sql
+    DELIMITER $$
+    CREATE TRIGGER UPDATE_MEMBER_BALANCE_ON_INSERT_IN_OPERATION
+    BEFORE  INSERT ON operation
+    FOR EACH ROW
+    BEGIN
+      	CALL updateMemberBalance(NEW.montantEcu, NEW.codeCrediteur);
+        CALL updateMemberBalance(-NEW.montantEcu, NEW.codeDebiteur);
+    END
+    $$
+    ```
+  - Mise à jour du solde des utilisateurs lors d'un UPDATE dans **operation**
+      ```sql
+      DELIMITER $$
+      CREATE TRIGGER UPDATE_MEMBER_BALANCE_ON_UPDATE_IN_OPERATION
+      BEFORE  UPDATE ON operation
+      FOR EACH ROW
+      BEGIN
+        	CALL updateMemberBalance(NEW.montantEcu, NEW.codeCrediteur);
+          CALL updateMemberBalance(-NEW.montantEcu, NEW.codeDebiteur);
+      END
+      $$
+      ```
+    _Pour les précédents triggers, il semble improbable qu'on update les tables operation et operationchange. Cependant, afin de garder la cohérence des données, nous avons prévus les triggers nécessaires._
+
+#### 4.4
+
+Voici le script de la fonction demandée :
+```sql
+DELIMITER $$
+CREATE FUNCTION sumEcus()
+RETURNS FLOAT DETERMINISTIC
+BEGIN
+	DECLARE sumEcus FLOAT;
+  SELECT SUM(solde_ecu) INTO sumEcus FROM membre;
+  RETURN sumEcus;
+END;
+$$
+```
+
+#### 4.5
+
+Voici le script de la fonction demandée :
+```sql
+DELIMITER $$
+CREATE FUNCTION sumEcusExchangedInPeriod(beginDate TIMESTAMP, endDate TIMESTAMP)
+RETURNS FLOAT DETERMINISTIC
+BEGIN
+DECLARE sumEcus FLOAT;
+  SELECT SUM(montantEcu) INTO sumEcus FROM operation WHERE dateHeureOperation BETWEEN beginDate AND endDate;
+  RETURN sumEcus;
+END;
+$$
+```
+
+## Contributeurs
 
 Réalisé par :
 - Amandine Deraedt ([ama62nde](https://github.com/ama62nde))

@@ -1,14 +1,13 @@
 -- phpMyAdmin SQL Dump
--- version 4.9.5deb2
+-- version 5.1.1
 -- https://www.phpmyadmin.net/
 --
--- Hôte : localhost:3306
--- Généré le : jeu. 25 nov. 2021 à 11:54
--- Version du serveur :  8.0.25-0ubuntu0.20.04.1
--- Version de PHP : 8.0.1
+-- Hôte : 127.0.0.1:3306
+-- Généré le : jeu. 25 nov. 2021 à 17:26
+-- Version du serveur : 8.0.27
+-- Version de PHP : 7.4.26
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-SET AUTOCOMMIT = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
 
@@ -19,10 +18,10 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de données : `SEL_LA2_MONNAIE`
+-- Base de données : `sel_la2_monnaie`
 --
-CREATE DATABASE IF NOT EXISTS `SEL_LA2_MONNAIE` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-USE `SEL_LA2_MONNAIE`;
+CREATE DATABASE IF NOT EXISTS `sel_la2_monnaie` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+USE `sel_la2_monnaie`;
 
 -- --------------------------------------------------------
 
@@ -115,7 +114,6 @@ CREATE TABLE IF NOT EXISTS `membre` (
   `Telephone` varchar(15) DEFAULT NULL,
   `CompteTemps` int DEFAULT NULL,
   `habitantParc` tinyint(1) NOT NULL,
-  `particulier` tinyint(1) NOT NULL,
   `nom_de_commerce` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
   `solde_ecu` float NOT NULL,
   PRIMARY KEY (`CodeMembre`)
@@ -157,18 +155,19 @@ CREATE TABLE IF NOT EXISTS `operation` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `operationChange`
+-- Structure de la table `operationchange`
 --
 
-DROP TABLE IF EXISTS `operationChange`;
-CREATE TABLE IF NOT EXISTS `operationChange` (
+DROP TABLE IF EXISTS `operationchange`;
+CREATE TABLE IF NOT EXISTS `operationchange` (
   `idChange` int NOT NULL AUTO_INCREMENT,
   `montant` float NOT NULL,
   `type` varchar(10) NOT NULL,
   `Membre_CodeMembre` int NOT NULL,
   `dateHeureChange` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `soldeCompte` float NOT NULL DEFAULT '0',
-  PRIMARY KEY (`idChange`)
+  PRIMARY KEY (`idChange`),
+  KEY `fk_Operation_Change_Membre` (`Membre_CodeMembre`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -246,6 +245,12 @@ ALTER TABLE `membre_has_cotisation`
 ALTER TABLE `operation`
   ADD CONSTRAINT `FK_Operation_crediteur_code` FOREIGN KEY (`codeCrediteur`) REFERENCES `membre` (`CodeMembre`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `FK_Operation_debiteur_code` FOREIGN KEY (`codeDebiteur`) REFERENCES `membre` (`CodeMembre`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `operationchange`
+--
+ALTER TABLE `operationchange`
+  ADD CONSTRAINT `fk_Operation_Change_Membre` FOREIGN KEY (`Membre_CodeMembre`) REFERENCES `membre` (`CodeMembre`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `proposition`

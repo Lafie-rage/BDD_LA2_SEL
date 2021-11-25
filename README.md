@@ -89,9 +89,25 @@ END;
 $$
 ```
 
-
 ### 2.2
 
+Voici la procedure réalisée :
+
+```sql
+DELIMITER $$
+CREATE PROCEDURE searchPropositions(IN `beginDate` DATE, IN `endDate` DATE, IN `competenceLabel` VARCHAR(100))
+BEGIN
+    	DECLARE competenceId INT;
+        SELECT idCompetence INTO competenceId FROM competence WHERE Description = competenceLabel;
+    	CREATE TEMPORARY TABLE temp_proposition_filtered SELECT * FROM proposition WHERE DateDebut < beginDate AND DateFin > endDate AND Competence_idCompetence = competenceId;
+END
+$$
+```
+Voici un exemple de son utilisation:
+```sql
+CALL searchPropositions(DATE("2021-11-11 01:02:03"), DATE("2021-11-25"), "piano");
+SELECT * FROM temp_proposition_filtered;
+```
 
 # Contributeurs
 

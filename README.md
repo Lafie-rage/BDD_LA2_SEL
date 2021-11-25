@@ -33,7 +33,7 @@ Voici le trigger réalisé :
 
 ### 1.5
 
-Voici le script d'ajout du trigger :
+Voici le script de création de la procédure :
 
 ```sql
 DELIMITER $$
@@ -43,10 +43,6 @@ BEGIN
 	DECLARE beneficiary INT;
     DECLARE propositionId INT;
     DECLARE author INT;
-	CASE
-		WHEN newStatus = "En cours" OR newStatus = "Prévu" OR newStatus = "Terminé" THEN
-        	UPDATE transaction SET Etat = newStatus WHERE idTransaction = transactionId LIMIT 1;
-    END CASE;
     IF newStatus = "Terminé" THEN
    		SELECT DureeEffective, Membre_CodeMembre, Proposition_idProposition INTO newCompteTemps, beneficiary, propositionId FROM transaction WHERE idTransaction = transactionId LIMIT 1;
     	SELECT Membre_CodeMembre INTO author FROM proposition WHERE idProposition = propositionId LIMIT 1;
@@ -57,21 +53,16 @@ END;
 $$
 ```
 
+Et le script d'ajout du trigger  :
+
 ```sql
 DELIMITER $$
-CREATE TRIGGER MAJ_SOLDE
+CREATE TRIGGER UPDATE_ON_TRANSACTION_STATUS
  AFTER
 UPDATE ON transaction
 FOR EACH ROW
 BEGIN
-	IF NEW.Etat="Termine" THEN
-	UPDATE membre
-    SET CompteTemps=CompteTemps+(select DureeEffective from transaction where NEW.Etat="Termine" AND OLD.Etat="en cours")
-	WHERE CodeMembre=NEW.Membre_CodeMembre;
-    UPDATE membre
-    SET CompteTemps=CompteTemps-(select DureeEffective from transaction where NEW.Etat="Termine" AND OLD.Etat="en cours")
-	WHERE CodeMembre=(select Membre_CodeMembre from proposition where idProposition=NEW.Proposition_idProposition);
-    END IF;
+	CALL updateTransactionStatus(NEW.Etat, NEW.idTransaction);
 END;
 $$
 ```

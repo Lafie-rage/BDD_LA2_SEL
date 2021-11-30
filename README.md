@@ -119,6 +119,102 @@ SELECT * FROM temp_proposition_filtered;
 
 ### Question 3
 
+#### Membres
+
+La génération des membres se fait sur la base d'un fichier CSV.  
+Celui-ci contient à la base :
+- nom
+- prénom
+- numéro de téléphone
+- adresse
+- code postale
+- ville de résidence
+- date de naissance
+- un identifiant unique qui sera notre codeMembre
+
+Nous avons utilisé le fichier **customer.csv** fournit lors de la première séance de TP dont nous avons modifié les noms de tables afin qu'il corresponde au schéma de notre table membre.  
+Ceci nous a permis d'avoir un ensemble de données de base sur les utilisateurs.
+
+Afin de générer la valeur de **habitantParc**, nous avons utilisé la fonction RAND() de mysql afin de générer un entier dans la plage *[0; 1]*.  
+
+Voici la requête utilisée :
+
+```sql
+UPDATE `Membre` SET `habitantParc`= RAND();
+```
+
+Pour ce qui est du champs **Mail**, nous avons simplement concaténé et mis en minuscule le nom et prénom afin de former une adresse mail sous ce format : **prenom.nom@gmail.com**.
+Voici la requête utilisée :
+```sql
+UPDATE `Membre` SET `Mail`= LOWER(CONCAT(prenom, ".", nom, "@gmail.com"));
+```
+
+Finalement, pour la génération des noms de commerce, puisque tous les utilisateurs ne devaient pas en avoir et que nous souhaitions garder l'aléatoire lors de la génération du nom, nous avons d'abord créé une fonction capable de générer une chaine de caractères aléatoire en fonction de sa taille maximale.  
+
+La génération aléatoire de chaque caractère est inspirée d'un script proposé [ici](https://stackoverflow.com/a/16738409).
+
+Voici le script de création de cette fonction :
+```sql
+DELIMITER $$
+CREATE FUNCTION generateRandomString(maxLength INT)
+	RETURNS VARCHAR(256) DETERMINISTIC
+BEGIN
+	DECLARE length INT;
+    DECLARE randomStringGenerated VARCHAR(256);
+    DECLARE counter INT ;
+
+    -- Initialize variables
+    SET counter = 0;
+    SET randomStringGenerated = "";
+
+    -- Pick a random length between maxLength and 90% of max length.
+    SET length = FLOOR(RAND()*(maxLength-(maxLength * 0.9)+1) + (maxLength * 0.9));
+
+    -- Loop to generate the random string depending on the chosen length
+    label1: LOOP
+      SET counter = counter + 1;
+      IF counter < length THEN
+      	SET randomStringGenerated = CONCAT(randomStringGenerated, substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ', rand(@seed:=round(rand(@seed)*4294967296))*26+1, 1));
+        ITERATE label1;
+      END IF;
+      LEAVE label1;
+    END LOOP label1;
+
+    RETURN randomStringGenerated;
+ END
+ $$
+```
+
+Il ne restait plus qu'à créer une fonction qui déciderait, de manière aléatoire si le membre était propriétaire ou non, autrement dit, si le champ **nom_du_commerce** serait rempli ou à **NULL**.
+
+Voici la fonction réalisée :
+
+```sql
+DELIMITER $$
+CREATE FUNCTION defineIfMemberIsProfessional()
+	RETURNS VARCHAR(50) DETERMINISTIC
+BEGIN
+	DECLARE businessName VARCHAR(50);
+
+    -- There's 1/3 chance to be a professional
+    IF FLOOR(RAND()*(3)) > 1 THEN
+      SET businessName = generateRandomString(50);
+    END IF;
+
+	RETURN businessName;
+END
+$$
+```
+
+Cette fonction renvoie **NULL** si l'utilisateur est un particulier, sinon elle renvoie un nom de commerce.  
+
+Il suffit alors de l'appeler comme suit :
+```sql
+UPDATE `Membre` SET `nom_de_commerce`= defineIfMemberIsProfessional()
+```
+
+TODO : Fonctions avec curseurs pour génération automatisée des membres de manière aléatoire.
+
 ### Question 4
 
 #### 4.1
@@ -127,7 +223,7 @@ SELECT * FROM temp_proposition_filtered;
 
 #### 4.2
 
-Le script de création de la base de données (sans vue/fonction/procedure) modifiée se trouve dans le fichier **SEL_LA2_MONNAIE_Model.sql**.
+Le script de création de la base de données (sans vue, fonction ou procédure) modifiée se trouve dans le fichier **SEL_LA2_MONNAIE_Model.sql**.
 
 #### 4.3
 

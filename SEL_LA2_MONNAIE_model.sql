@@ -31,7 +31,7 @@ USE `sel_la2_monnaie`;
 
 DROP TABLE IF EXISTS `categorie`;
 CREATE TABLE IF NOT EXISTS `categorie` (
-  `idCategorie` int NOT NULL,
+  `idCategorie` int NOT NULL AUTO_INCREMENT,
   `description` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`idCategorie`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS `categorie` (
 
 DROP TABLE IF EXISTS `competence`;
 CREATE TABLE IF NOT EXISTS `competence` (
-  `idCompetence` int NOT NULL,
+  `idCompetence` int NOT NULL AUTO_INCREMENT,
   `Description` varchar(100) DEFAULT NULL,
   `Categorie_idCategorie` int NOT NULL,
   PRIMARY KEY (`idCompetence`),
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `competence` (
 
 DROP TABLE IF EXISTS `competencemembre`;
 CREATE TABLE IF NOT EXISTS `competencemembre` (
-  `Competence_idCompetence` int NOT NULL,
+  `Competence_idCompetence` int NOT NULL AUTO_INCREMENT,
   `Membre_CodeMembre` int NOT NULL,
   PRIMARY KEY (`Competence_idCompetence`,`Membre_CodeMembre`),
   KEY `fk_CompetenceMembre_Competence1_idx` (`Competence_idCompetence`),
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `espacedonnees` (
 
 DROP TABLE IF EXISTS `membre`;
 CREATE TABLE IF NOT EXISTS `membre` (
-  `CodeMembre` int NOT NULL,
+  `CodeMembre` int NOT NULL AUTO_INCREMENT,
   `Nom` varchar(100) DEFAULT NULL,
   `Prenom` varchar(100) DEFAULT NULL,
   `Rue` varchar(100) DEFAULT NULL,
@@ -113,9 +113,9 @@ CREATE TABLE IF NOT EXISTS `membre` (
   `Mail` varchar(100) DEFAULT NULL,
   `Telephone` varchar(15) DEFAULT NULL,
   `CompteTemps` int DEFAULT NULL,
-  `habitantParc` tinyint(1) NOT NULL,
+  `habitantParc` tinyint(1) NOT NULL DEFAULT '0',
   `nom_de_commerce` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
-  `solde_ecu` float NOT NULL,
+  `solde_ecu` float NOT NULL DEFAULT '0',
   PRIMARY KEY (`CodeMembre`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
@@ -197,7 +197,7 @@ CREATE TABLE IF NOT EXISTS `proposition` (
 
 DROP TABLE IF EXISTS `transaction`;
 CREATE TABLE IF NOT EXISTS `transaction` (
-  `idTransaction` int NOT NULL,
+  `idTransaction` int NOT NULL AUTO_INCREMENT,
   `Membre_CodeMembre` int NOT NULL,
   `Etat` varchar(45) DEFAULT NULL,
   `Proposition_idProposition` int NOT NULL,

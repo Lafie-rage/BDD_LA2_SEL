@@ -218,6 +218,67 @@ UPDATE `membre` SET `nom_de_commerce`= defineIfMemberIsProfessional()
 Afin d'ajouter les données de table des membres, il faudra donc, en premier lieu importer le fichier **membre.csv**.
 Ensuite, le script **randomDataInsertion.sql** permettra la modification des champs non saisis dans le fichier csv.
 
+#### Cotisations
+
+Nous avons souhaitez générer un nombre aléatoire de cotisations durant les années entre 2000 et maintenant.  
+Il y a 1/5 chances d'avoir une nouvelle cotisation chaque année. Le prix variant entre 5 et 25€.
+
+Voici la fonction réalisée :
+```sql
+DELIMITER $$
+CREATE PROCEDURE addRandomMembershipTariff()
+BEGIN
+  DECLARE counter INT;
+  DECLARE newTariff INT;
+  DECLARE oldTariff INT;
+  DECLARE newTariffBeginDate DATE;
+
+  SET counter = 0;
+
+  -- iterate through years since 2001
+  yearLoop: LOOP
+    SET counter = counter + 1;
+    SET newTariff = NULL;
+    IF counter < (YEAR(CURRENT_DATE()) - 2000) THEN
+      -- Randomly determine weather or not a new membership tariff has been defined
+      -- There is 1/5 chance
+      IF RAND() * 5 > 3 THEN
+        -- Retrieve current tariff
+        SELECT Prix INTO oldTariff FROM cotisation WHERE dateFin IS NULL;
+
+        -- Iterate while new tariff is equal to the old one
+        tariffLoop: LOOP
+          -- Randomly generate a new tariff between5 and 25
+          SET newTariff = RAND()* (21) + 5;
+          IF newTariff = oldTariff AND oldTariff IS NOT NULL THEN
+            ITERATE tariffLoop;
+          END IF;
+        LEAVE tariffLoop;
+        END LOOP tariffLoop;
+
+          IF newTariff IS NOT NULL THEN
+
+              -- 2000 + counter gives the year of the new tariff
+              SET newTariffBeginDate = STR_TO_DATE(CONCAT('01,1,', (2000 + counter)),'%d,%m,%Y');
+
+              -- Define old tariff end date
+              UPDATE cotisation SET DateFin = DATE_SUB(newTariffBeginDate,INTERVAL 1 DAY) WHERE DateFin IS NULL;
+
+              -- Insert the new tariff
+              INSERT INTO cotisation(DateDebut, Prix) VALUES (
+              newTariffBeginDate,
+              newTariff
+              );
+          END IF;
+      END IF;
+      ITERATE yearLoop;
+    END IF;
+  LEAVE yearLoop;
+  END LOOP yearLoop;
+END
+$$
+```
+
 ### Question 4
 
 #### 4.1

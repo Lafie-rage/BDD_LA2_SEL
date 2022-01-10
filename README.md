@@ -292,7 +292,53 @@ Dans le but d'avoir des compétences et catégories existants à vérifier plus 
 Elle ne seront donc pas aléatoire. 
 On va insérer les 2 fichiers csv et exporter le script qui figure avec tous les scripts de créations et insertions de tables dans le répertoire dumps/Dumps20211118.
 
+#### Competence Membre 
+Voici la procédure réalisée pour l'insertion de données dans la table CompetenceMembre
 
+```sql
+DELIMITER $$
+USE sel_la2_monnaie$$
+CREATE DEFINER=root@localhost PROCEDURE competencemembres()
+BEGIN
+declare i integer;
+declare cle_exist integer;
+declare nb_iteration integer;
+declare nombre_competences integer;
+declare competence_aleatoire integer;
+declare nombre_membre integer;
+declare j integer;
+select count() into nombre_membre from membre;
+select count() into nombre_competences from competence;
+set i=1;
+boucle_competence_membre : loop
+    set nb_iteration = RAND()(6-1)+1;
+    set nb_iteration = nb_iteration-2;
+    set j=1;
+    boucle_nb_competence : loop
+
+        if j>nb_iteration then 
+            leave boucle_nb_competence;
+        end if;
+        set competence_aleatoire = RAND()(nombre_competences-1)+1;
+        select count(*) into cle_exist from competencemembre where Competence_idCompetence= competence_aleatoire and Membre_CodeMembre=i;
+        if cle_exist=0 then
+            insert into competencemembre values(competence_aleatoire,i);
+        end if;
+        set j=j+1;
+        iterate boucle_nb_competence;
+    end loop;
+    if i < nombre_membre then
+        set i=i+1;
+        iterate boucle_competence_membre;
+    end if;
+    leave boucle_competence_membre;
+
+end loop;
+END$$
+
+DELIMITER ;
+;
+```
 ### Question 4
 
 #### 4.1

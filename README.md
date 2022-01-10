@@ -417,7 +417,32 @@ $$
 
 #### 5.1
 On remet le solde d'écu de chaque membre à 10, valeur initiale. 
-update membre set solde_ecu=10;
+```update membre set solde_ecu=10;```
+
+On va parcourir l'ensemble des utilisateurs et récupèrer leur nombre de transaction dans le mois et mettre à jour le solde en conséquence. 
+
+```sql
+DELIMITER $$
+CREATE PROCEDURE addRandomMembershipTariff()
+BEGIN
+DECLARE nb_utilisateur INTEGER;
+SELECT COUNT(*) into nb_membres from membre;
+boucle : loop
+	set i=i+1;
+	SELECT COUNT(*) into nb_transactions from transaction where Membre_CodeMembre=i and month(DateRealisation)=month(curdate()) and year(DateRealisation) = year(curdate());
+	if nb_transactions=0 then 
+		update membre set solde_ecu=solde_ecu-3 where id_utilisateurs=i;
+	else if nb_transactions >=50 then 
+		update membre set solde_ecu=solde_ecu+((nb_transactions%50)*3) where id_utilisateur=i;
+	end if;
+	end if;
+	 if i<nb_utilisateur then 
+	 	iterate boucle;
+	end if;
+leave boucle;
+end loop;
+END
+```
 
 ## Contributeurs
 

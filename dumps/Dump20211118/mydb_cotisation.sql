@@ -39,6 +39,59 @@ LOCK TABLES `cotisation` WRITE;
 INSERT INTO `cotisation` VALUES ('2012-01-31 00:00:00',10,'2019-12-01 00:00:00'),('2019-12-02 00:00:00',10,'2020-12-31 00:00:00'),('2021-01-01 00:00:00',10,NULL);
 /*!40000 ALTER TABLE `cotisation` ENABLE KEYS */;
 UNLOCK TABLES;
+
+DELIMITER $$
+CREATE PROCEDURE addRandomMembershipTariff()
+BEGIN
+  DECLARE counter INT;
+  DECLARE newTariff INT;
+  DECLARE oldTariff INT;
+  DECLARE newTariffBeginDate DATE;
+
+  SET counter = 0;
+
+  -- iterate through years since 2001
+  yearLoop: LOOP
+    SET counter = counter + 1;
+    SET newTariff = NULL;
+    IF counter < (YEAR(CURRENT_DATE()) - 2000) THEN
+      -- Randomly determine weather or not a new membership tariff has been defined
+      -- There is 1/5 chance
+      IF RAND() * 5 > 3 THEN
+        -- Retrieve current tariff
+        SELECT Prix INTO oldTariff FROM cotisation WHERE dateFin IS NULL;
+
+        -- Iterate while new tariff is equal to the old one
+        tariffLoop: LOOP
+          -- Randomly generate a new tariff between5 and 25
+          SET newTariff = RAND()* (21) + 5;
+          IF newTariff = oldTariff AND oldTariff IS NOT NULL THEN
+            ITERATE tariffLoop;
+          END IF;
+        LEAVE tariffLoop;
+        END LOOP tariffLoop;
+
+          IF newTariff IS NOT NULL THEN
+
+              -- 2000 + counter gives the year of the new tariff
+              SET newTariffBeginDate = STR_TO_DATE(CONCAT('01,1,', (2000 + counter)),'%d,%m,%Y');
+
+              -- Define old tariff end date
+              UPDATE cotisation SET DateFin = DATE_SUB(newTariffBeginDate,INTERVAL 1 DAY) WHERE DateFin IS NULL;
+
+              -- Insert the new tariff
+              INSERT INTO cotisation(DateDebut, Prix) VALUES (
+              newTariffBeginDate,
+              newTariff
+              );
+          END IF;
+      END IF;
+      ITERATE yearLoop;
+    END IF;
+  LEAVE yearLoop;
+  END LOOP yearLoop;
+END
+$$
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

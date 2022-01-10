@@ -420,6 +420,7 @@ On remet le solde d'écu de chaque membre à 10, valeur initiale.
 ```update membre set solde_ecu=10;```
 
 On va parcourir l'ensemble des utilisateurs et récupèrer leur nombre de transaction dans le mois et mettre à jour le solde en conséquence. 
+Voici le script de la fonction demandée :
 
 ```sql
 DELIMITER $$
@@ -445,6 +446,7 @@ END
 ```
 #### 5.3
 Mise à jour des soldes de compte suite aux opérations de débit ou de crédit. 
+Voici le script de la fonction demandée :
 ```sql
 DELIMITER $$
 CREATE PROCEDURE MAJECUPARTRANSACTION(IN Debiteur INT, Crediteur INT, IN Montant INT)
@@ -453,8 +455,10 @@ update membre set solde_ecu=solde+Montant where CodeMembre=Crediteur;
 update membre set solde_ecu=solde-Montant where CodeMembre=Debiteur;
 END
 ```
-Les triggers associés ont été créés dans la question 4.3 : UPDATE_BANK_BALANCE_ON_UPDATE, UPDATE_BANK_BALANCE_ON_INSERT, UPDATE_MEMBER_BALANCE_ON_UPDATE_IN_CHANGE, UPDATE_MEMBER_BALANCE_ON_INSERT_IN_CHANGE, UPDATE_MEMBER_BALANCE_ON_INSERT_IN_OPERATION, UPDATE_MEMBER_BALANCE_ON_UPDATE_IN_OPERATION.
-
+Les triggers associés ont été créés dans la question 4.3 :
+```
+UPDATE_BANK_BALANCE_ON_UPDATE, UPDATE_BANK_BALANCE_ON_INSERT, UPDATE_MEMBER_BALANCE_ON_UPDATE_IN_CHANGE, UPDATE_MEMBER_BALANCE_ON_INSERT_IN_CHANGE, UPDATE_MEMBER_BALANCE_ON_INSERT_IN_OPERATION, UPDATE_MEMBER_BALANCE_ON_UPDATE_IN_OPERATION.
+```
 
 ## Contributeurs
 

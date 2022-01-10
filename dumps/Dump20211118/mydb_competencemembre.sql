@@ -83,7 +83,7 @@ END$$
 DELIMITER ;
 
 call competencemembres();
-;
+
 
 
 /*!40000 ALTER TABLE `competencemembre` ENABLE KEYS */;

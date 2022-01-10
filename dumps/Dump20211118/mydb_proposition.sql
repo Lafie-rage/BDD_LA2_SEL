@@ -43,7 +43,58 @@ CREATE TABLE `proposition` (
 
 LOCK TABLES `proposition` WRITE;
 /*!40000 ALTER TABLE `proposition` DISABLE KEYS */;
-INSERT INTO `proposition` VALUES (1,1,'sortie cyclisme','2021-11-20 00:00:00','2021-12-02 00:00:00',1),(2,1,'sortie cyclisme','2021-11-10 00:00:00','2021-12-31 00:00:00',2),(3,5,'piano en groupe','2021-11-19 00:00:00','2022-02-27 00:00:00',1),(4,5,'piano en groupe','2021-11-19 00:00:00','2022-01-03 00:00:00',7),(5,5,'piano individuel','2021-11-19 00:00:00','2022-02-27 00:00:00',7),(6,5,'piano en groupe','2021-11-19 00:00:00','2022-02-27 00:00:00',1),(7,14,'part de welsh','2021-11-25 00:00:00','2021-11-26 00:00:00',1);
+
+DELIMITER $$
+USE sel_la2_monnaie$$
+CREATE DEFINER=root@localhost PROCEDURE propositions()
+BEGIN
+declare i integer;
+declare nombre_membre integer;
+declare nombre_competences integer;
+declare date_debut_proposition date;
+declare membre_aleatoire integer;
+declare competence_aleatoire integer;
+declare nb_jours_proposition integer;
+declare datefin date;
+declare description_competence varchar(120);
+declare ligne_aleatoire integer;
+declare nb_competences integer;
+select count() into nombre_membre from membre;
+select count() into nombre_competences from competence;
+
+set i=1;
+boucleNbIteration : loop
+    set membre_aleatoire=RAND()*(nombre_membre-1)+1;
+    set date_debut_proposition=date_format(
+        from_unixtime(
+             rand() *
+                (unix_timestamp('2021-01-01 16:00:00') - unix_timestamp(now())) +
+                 unix_timestamp(now())
+                      ), '%Y-%m-%d ');
+    set nb_jours_proposition=RAND()(365-1)+1;
+    select DATE_ADD(date_debut_proposition, INTERVAL nb_jours_proposition DAY) into datefin;
+    select count() into nb_competences from competencemembre where Membre_CodeMembre=membre_aleatoire;
+    if nb_competences>0 then 
+    set ligne_aleatoire=RAND()*(nb_competences-1)+1;
+    set ligne_aleatoire=ligne_aleatoire-1;
+    SELECT Competence_idCompetence into competence_aleatoire from competencemembre Where Membre_CodeMembre=membre_aleatoire LIMIT 1 OFFSET ligne_aleatoire;
+    select description into description_competence from competence where idCompetence=competence_aleatoire;
+    insert into proposition values(i,competence_aleatoire,description_competence,date_debut_proposition,datefin,membre_aleatoire);
+    end if;
+    if i<12000 then
+    set i=i+1;
+    iterate boucleNbIteration;
+    end if;
+leave boucleNbIteration;
+end loop;
+
+END$$
+
+DELIMITER ;
+;
+
+call propositions();
+
 /*!40000 ALTER TABLE `proposition` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

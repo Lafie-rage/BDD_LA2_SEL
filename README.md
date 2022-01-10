@@ -394,6 +394,67 @@ DELIMITER ;
 ;
 ```
 
+### Insertion Transaction 
+
+Voici la procédure créée pour l'insertion de données aléatoires dans la table Transaction : 
+```sql
+DELIMITER $$
+USE `sel_la2_monnaie`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `transactions`()
+BEGIN
+declare i integer;
+declare nb_utilisateur integer;
+declare nb_proposition integer;
+declare utilisateur_aleatoire integer;
+declare proposition_aleatoire integer;
+declare duree_initiale integer;
+declare duree_effective integer;
+declare date_previsionnelle date;
+declare date_debut_prop date;
+declare date_fin_prop date;
+declare existe integer;
+declare etat varchar(50);
+set i=1;
+select count(*) into nb_utilisateur from membre;
+select count(*) into nb_proposition from proposition;
+
+boucle : loop
+    set utilisateur_aleatoire=RAND()*(nb_utilisateur-1)+1;
+    set proposition_aleatoire=RAND()*(nb_proposition-1)+1;
+    select count(*) into existe from proposition where idProposition=proposition_aleatoire;
+    if existe <>0 then
+        set duree_initiale=RAND()*(10-1)+1;
+        set duree_effective=RAND()*(10-1)+1;
+        select DateDebut,DateFin into date_debut_prop,date_fin_prop from proposition where idProposition=proposition_aleatoire;
+        set date_previsionnelle=date_format(
+            from_unixtime(
+                 rand() *
+                    (unix_timestamp(date_debut_prop) - unix_timestamp(date_fin_prop)) +
+                     unix_timestamp(date_fin_prop)
+                          ), '%Y-%m-%d ');
+                          
+         if date_previsionnelle<now() then
+            set etat='termine';
+         else if date_previsionnelle=now() then
+            set etat='en cours';
+            else set etat='planifiee';
+            set duree_effective=null;
+            end if;
+         end if;
+         insert into transaction values (i,utilisateur_aleatoire,etat,proposition_aleatoire,duree_initiale,duree_effective,date_previsionnelle,date_previsionnelle);
+    end if;
+    if i<12000 then 
+        set i=i+1;
+        iterate boucle;
+    end if;
+    leave boucle;
+end loop;
+END$$
+
+DELIMITER ;
+;
+```
+
 ### Question 4
 
 #### 4.1

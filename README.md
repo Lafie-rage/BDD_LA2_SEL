@@ -290,7 +290,7 @@ $$
 ```
 Dans le but d'avoir des compétences et catégories existants à vérifier plus simplement, nous avons choisi de les insérer à partir d'un csv. 
 Elle ne seront donc pas aléatoire. 
-On va insérer les 2 fichiers csv et exporter le script.
+On va insérer les 2 fichiers csv et exporter le script qui figure avec tous les scripts de créations et insertions de tables dans le répertoire dumps/Dumps20211118.
 
 
 ### Question 4

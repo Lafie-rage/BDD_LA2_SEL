@@ -119,6 +119,16 @@ SELECT * FROM temp_proposition_filtered;
 
 ### Question 3
 
+#### Ordre de publication 
+L’ordre de création et d'insertion dans les tables a une importance pour ne pas générer d'erreurs car il y a des clés étrangères et des clés primaires
+Il faudra donc les générer dans l'ordre suivant : 
+Membres
+Categorie
+Competences
+cotisation  
+Propositions 
+Transactions
+
 #### Membres
 
 La génération des membres se fait sur la base d'un fichier CSV.  
@@ -278,6 +288,8 @@ BEGIN
 END
 $$
 ```
+
+
 
 ### Question 4
 

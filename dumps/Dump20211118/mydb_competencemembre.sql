@@ -81,6 +81,8 @@ end loop;
 END$$
 
 DELIMITER ;
+
+call competencemembres();
 ;
 
 

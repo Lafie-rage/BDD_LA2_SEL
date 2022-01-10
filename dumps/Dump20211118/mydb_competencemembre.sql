@@ -39,7 +39,51 @@ CREATE TABLE `competencemembre` (
 
 LOCK TABLES `competencemembre` WRITE;
 /*!40000 ALTER TABLE `competencemembre` DISABLE KEYS */;
-INSERT INTO `competencemembre` VALUES (1,1),(1,2),(1,9),(1,63),(1,183),(5,1),(5,7),(6,9),(8,1),(8,3),(11,1),(13,1),(13,10);
+
+DELIMITER $$
+USE sel_la2_monnaie$$
+CREATE DEFINER=root@localhost PROCEDURE competencemembres()
+BEGIN
+declare i integer;
+declare cle_exist integer;
+declare nb_iteration integer;
+declare nombre_competences integer;
+declare competence_aleatoire integer;
+declare nombre_membre integer;
+declare j integer;
+select count() into nombre_membre from membre;
+select count() into nombre_competences from competence;
+set i=1;
+boucle_competence_membre : loop
+    set nb_iteration = RAND()(6-1)+1;
+    set nb_iteration = nb_iteration-2;
+    set j=1;
+    boucle_nb_competence : loop
+
+        if j>nb_iteration then 
+            leave boucle_nb_competence;
+        end if;
+        set competence_aleatoire = RAND()(nombre_competences-1)+1;
+        select count(*) into cle_exist from competencemembre where Competence_idCompetence= competence_aleatoire and Membre_CodeMembre=i;
+        if cle_exist=0 then
+            insert into competencemembre values(competence_aleatoire,i);
+        end if;
+        set j=j+1;
+        iterate boucle_nb_competence;
+    end loop;
+    if i < nombre_membre then
+        set i=i+1;
+        iterate boucle_competence_membre;
+    end if;
+    leave boucle_competence_membre;
+
+end loop;
+END$$
+
+DELIMITER ;
+;
+
+
 /*!40000 ALTER TABLE `competencemembre` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

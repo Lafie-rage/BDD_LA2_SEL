@@ -339,6 +339,61 @@ END$$
 DELIMITER ;
 ;
 ```
+
+### Proposition 
+Voici la procédure créée pour automatisation de la création des insertions dans la table proposition 
+
+```sql
+DELIMITER $$
+USE sel_la2_monnaie$$
+CREATE DEFINER=root@localhost PROCEDURE propositions()
+BEGIN
+declare i integer;
+declare nombre_membre integer;
+declare nombre_competences integer;
+declare date_debut_proposition date;
+declare membre_aleatoire integer;
+declare competence_aleatoire integer;
+declare nb_jours_proposition integer;
+declare datefin date;
+declare description_competence varchar(120);
+declare ligne_aleatoire integer;
+declare nb_competences integer;
+select count() into nombre_membre from membre;
+select count() into nombre_competences from competence;
+
+set i=1;
+boucleNbIteration : loop
+    set membre_aleatoire=RAND()*(nombre_membre-1)+1;
+    set date_debut_proposition=date_format(
+        from_unixtime(
+             rand() *
+                (unix_timestamp('2021-01-01 16:00:00') - unix_timestamp(now())) +
+                 unix_timestamp(now())
+                      ), '%Y-%m-%d ');
+    set nb_jours_proposition=RAND()(365-1)+1;
+    select DATE_ADD(date_debut_proposition, INTERVAL nb_jours_proposition DAY) into datefin;
+    select count() into nb_competences from competencemembre where Membre_CodeMembre=membre_aleatoire;
+    if nb_competences>0 then 
+    set ligne_aleatoire=RAND()*(nb_competences-1)+1;
+    set ligne_aleatoire=ligne_aleatoire-1;
+    SELECT Competence_idCompetence into competence_aleatoire from competencemembre Where Membre_CodeMembre=membre_aleatoire LIMIT 1 OFFSET ligne_aleatoire;
+    select description into description_competence from competence where idCompetence=competence_aleatoire;
+    insert into proposition values(i,competence_aleatoire,description_competence,date_debut_proposition,datefin,membre_aleatoire);
+    end if;
+    if i<12000 then
+    set i=i+1;
+    iterate boucleNbIteration;
+    end if;
+leave boucleNbIteration;
+end loop;
+
+END$$
+
+DELIMITER ;
+;
+```
+
 ### Question 4
 
 #### 4.1

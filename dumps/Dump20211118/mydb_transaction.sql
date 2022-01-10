@@ -45,7 +45,67 @@ CREATE TABLE `transaction` (
 
 LOCK TABLES `transaction` WRITE;
 /*!40000 ALTER TABLE `transaction` DISABLE KEYS */;
-INSERT INTO `transaction` VALUES (1,172,'prevu',1,3,NULL,'2021-11-25 00:00:00',NULL),(2,19,'en cours',3,1,NULL,'2021-11-18 00:00:00','2021-11-18 00:00:00'),(3,1,'termine',4,1,1,'2021-11-01 00:00:00','2021-11-01 00:00:00'),(4,90,'prevu',7,1,NULL,'2021-11-25 00:00:00','2021-11-25 00:00:00');
+
+
+
+DELIMITER $$
+USE `sel_la2_monnaie`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `transactions`()
+BEGIN
+declare i integer;
+declare nb_utilisateur integer;
+declare nb_proposition integer;
+declare utilisateur_aleatoire integer;
+declare proposition_aleatoire integer;
+declare duree_initiale integer;
+declare duree_effective integer;
+declare date_previsionnelle date;
+declare date_debut_prop date;
+declare date_fin_prop date;
+declare existe integer;
+declare etat varchar(50);
+set i=1;
+select count(*) into nb_utilisateur from membre;
+select count(*) into nb_proposition from proposition;
+
+boucle : loop
+    set utilisateur_aleatoire=RAND()*(nb_utilisateur-1)+1;
+    set proposition_aleatoire=RAND()*(nb_proposition-1)+1;
+    select count(*) into existe from proposition where idProposition=proposition_aleatoire;
+    if existe <>0 then
+        set duree_initiale=RAND()*(10-1)+1;
+        set duree_effective=RAND()*(10-1)+1;
+        select DateDebut,DateFin into date_debut_prop,date_fin_prop from proposition where idProposition=proposition_aleatoire;
+        set date_previsionnelle=date_format(
+            from_unixtime(
+                 rand() *
+                    (unix_timestamp(date_debut_prop) - unix_timestamp(date_fin_prop)) +
+                     unix_timestamp(date_fin_prop)
+                          ), '%Y-%m-%d ');
+                          
+         if date_previsionnelle<now() then
+            set etat='termine';
+         else if date_previsionnelle=now() then
+            set etat='en cours';
+            else set etat='planifiee';
+            set duree_effective=null;
+            end if;
+         end if;
+         insert into transaction values (i,utilisateur_aleatoire,etat,proposition_aleatoire,duree_initiale,duree_effective,date_previsionnelle,date_previsionnelle);
+    end if;
+    if i<12000 then 
+        set i=i+1;
+        iterate boucle;
+    end if;
+    leave boucle;
+end loop;
+END$$
+
+DELIMITER ;
+;
+
+call transactionc();
+
 /*!40000 ALTER TABLE `transaction` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

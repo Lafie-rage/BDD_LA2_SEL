@@ -288,7 +288,9 @@ BEGIN
 END
 $$
 ```
-
+Dans le but d'avoir des compétences et catégories existants à vérifier plus simplement, nous avons choisi de les insérer à partir d'un csv. 
+Elle ne seront donc pas aléatoire. 
+On va insérer les 2 fichiers csv et exporter le script.
 
 
 ### Question 4

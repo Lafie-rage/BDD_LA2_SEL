@@ -415,6 +415,10 @@ END;
 $$
 ```
 
+#### 5.1
+On remet le solde d'écu de chaque membre à 10, valeur initiale. 
+update membre set solde_ecu=10;
+
 ## Contributeurs
 
 Réalisé par :
